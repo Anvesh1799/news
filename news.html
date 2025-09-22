@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telugu News Clip Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tiro+Telugu&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Telugu&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Guntur&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        #preview-area {
+            background-color: #fff;
+        }
+
+        /* Rich Text Editor Styling */
+        [contenteditable] {
+            outline: none;
+            cursor: text;
+        }
+
+        .active-editor {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+        
+        /* Image container layouts */
+        .image-container-1 {
+            display: flex;
+            justify-content: center;
+        }
+
+        .image-container-2 {
+            display: flex;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+        
+        .image-container-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            grid-template-areas: "top-left top-right" "bottom-left empty";
+        }
+
+        .image-container-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .img-item-1, .img-item-2, .img-item-3, .img-item-4 {
+            flex: 1;
+            height: auto;
+            object-fit: contain;
+            width: 100%;
+            max-height: 400px;
+        }
+
+        .img-item-1 { grid-area: top-left; }
+        .img-item-2 { grid-area: top-right; }
+        .img-item-3 { grid-area: bottom-left; }
+        .img-item-4 { grid-area: bottom-right; }
+        
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center">
+
+    <div class="max-w-4xl w-full">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Telugu News Clip Creator</h1>
+
+        <!-- Input Controls -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-6 w-full space-y-4">
+            
+            <!-- Logo Upload -->
+            <div>
+                <label for="logo-upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Sudinam Logo</label>
+                <input type="file" id="logo-upload" accept="image/png, image/jpeg, image/jpg" class="w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100 transition-colors duration-200" />
+            </div>
+
+            <!-- Image Upload -->
+            <div>
+                <label for="image-upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Pictures (max 4)</label>
+                <input type="file" id="image-upload" multiple accept="image/png, image/jpeg, image/jpg" class="w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100 transition-colors duration-200" />
+            </div>
+            
+            <!-- Paragraph Columns & Dateline -->
+            <div class="flex items-center space-x-4">
+                <div class="flex-1">
+                    <label for="paragraph-count" class="block text-sm font-medium text-gray-700 mb-2">Paragraph Columns</label>
+                    <select id="paragraph-count" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">1 Column</option>
+                        <option value="2">2 Columns</option>
+                        <option value="3">3 Columns</option>
+                        <option value="4">4 Columns</option>
+                    </select>
+                </div>
+                <div class="flex items-center mt-6">
+                    <input type="checkbox" id="add-dateline" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="add-dateline" class="ml-2 block text-sm font-medium text-gray-700">Add Telugu Dateline</label>
+                </div>
+            </div>
+
+            <!-- Text Formatting Controls -->
+            <div class="flex flex-wrap gap-2 mb-4 bg-gray-100 p-3 rounded-lg">
+                <button id="bold-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm font-semibold">B</button>
+                <button id="italic-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm font-semibold">I</button>
+                <button id="underline-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm font-semibold">U</button>
+                <input type="color" id="font-color" class="w-8 h-8 rounded-md border-none cursor-pointer">
+                
+                <select id="font-style-select" class="p-2 border border-gray-300 rounded-md text-sm">
+                    <option value="Inter">Inter</option>
+                    <option value="Tiro Telugu">Tiro Telugu</option>
+                    <option value="Noto Serif Telugu">Noto Serif Telugu</option>
+                    <option value="Hind Guntur">Hind Guntur</option>
+                </select>
+
+                <select id="font-size-select" class="p-2 border border-gray-300 rounded-md text-sm">
+                    <option value="1">8pt</option>
+                    <option value="2">10pt</option>
+                    <option value="3" selected>12pt</option>
+                    <option value="4">14pt</option>
+                    <option value="5">18pt</option>
+                    <option value="6">24pt</option>
+                    <option value="7">36pt</option>
+                </select>
+                
+                <button id="justify-left-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm">Left</button>
+                <button id="justify-center-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm">Center</button>
+                <button id="justify-right-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm">Right</button>
+                <button id="justify-full-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200 text-sm">Justify</button>
+            </div>
+
+            <!-- Text Inputs -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">News Title</label>
+                <div id="title-input" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow duration-200" contenteditable="true">Title...</div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Subheading (optional)</label>
+                <div id="subheading-input" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow duration-200" contenteditable="true">Subheading...</div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">News Content</label>
+                <div id="content-input" class="w-full p-2 border border-gray-300 rounded-lg resize-none min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow duration-200" contenteditable="true">Content...</div>
+            </div>
+            <div class="text-red-500 text-sm mt-2" id="error-message"></div>
+        </div>
+
+        <!-- Live Preview Area -->
+        <div id="preview-area-container" class="w-full flex justify-center mb-6">
+            <div id="preview-area" class="w-full max-w-4xl bg-white border border-gray-200 p-6 rounded-lg shadow-inner min-h-[600px] flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h3 id="preview-title" class="text-3xl font-extrabold text-gray-800" style="font-family: 'Inter', sans-serif;">Your News Title</h3>
+                    <img id="preview-logo" class="h-10 w-auto object-contain hidden" />
+                </div>
+                <h4 id="preview-subheading" class="text-xl font-semibold text-gray-700" style="font-family: 'Inter', sans-serif;">Your Subheading</h4>
+                <div id="preview-images" class="flex justify-center gap-4"></div>
+                <div id="preview-content-container" class="mt-4">
+                    <p id="preview-content" class="text-gray-800 leading-relaxed text-base" style="font-family: 'Inter', sans-serif;">Your news content will appear here.</p>
+                </div>
+                <div id="preview-date" class="mt-auto text-sm text-gray-500 text-right"></div>
+            </div>
+        </div>
+
+        <!-- Export Button -->
+        <div class="text-center">
+            <button id="export-btn" class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105 duration-200">
+                <span id="export-text">Export News Clip</span>
+                <span id="export-loader" class="hidden">
+                    <svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('image-upload');
+        const logoUpload = document.getElementById('logo-upload');
+        const titleInput = document.getElementById('title-input');
+        const subheadingInput = document.getElementById('subheading-input');
+        const contentInput = document.getElementById('content-input');
+        const paragraphCount = document.getElementById('paragraph-count');
+        const addDateline = document.getElementById('add-dateline');
+        const previewArea = document.getElementById('preview-area');
+        const previewTitle = document.getElementById('preview-title');
+        const previewSubheading = document.getElementById('preview-subheading');
+        const previewImages = document.getElementById('preview-images');
+        const previewContent = document.getElementById('preview-content');
+        const previewContentContainer = document.getElementById('preview-content-container');
+        const previewLogo = document.getElementById('preview-logo');
+        const previewDate = document.getElementById('preview-date');
+        const exportBtn = document.getElementById('export-btn');
+        const exportText = document.getElementById('export-text');
+        const exportLoader = document.getElementById('export-loader');
+        const errorMessage = document.getElementById('error-message');
+
+        const teluguMonths = ['జనవరి', 'ఫిబ్రవరి', 'మార్చి', 'ఏప్రిల్', 'మే', 'జూన్', 'జూలై', 'ఆగష్టు', 'సెప్టెంబర్', 'అక్టోబర్', 'నవంబర్', 'డిసెంబర్'];
+        const teluguDays = ['ఆదివారం', 'సోమవారం', 'మంగళవారం', 'బుధవారం', 'గురువారం', 'శుక్రవారం', 'శనివారం'];
+        
+        let activeEditor = null;
+        const editors = document.querySelectorAll('[contenteditable="true"]');
+
+        const updateDate = () => {
+            const now = new Date();
+            const dayOfWeek = teluguDays[now.getDay()];
+            const day = now.getDate();
+            const month = teluguMonths[now.getMonth()];
+            const year = now.getFullYear();
+            const formattedDate = `${day}, ${dayOfWeek}, ${month} ${year}`;
+            previewDate.textContent = formattedDate;
+        };
+
+        const updateDateline = () => {
+            const date = new Date();
+            const month = teluguMonths[date.getMonth()];
+            const day = date.getDate();
+            const datelineText = `సుదినం న్యూస్ , ${day} ${month} : `;
+            const currentContent = contentInput.textContent;
+            
+            if (addDateline.checked) {
+                const regex = /సుదినం న్యూస్ ,.*? : /;
+                if (!regex.test(currentContent)) {
+                    contentInput.textContent = datelineText + currentContent;
+                }
+            } else {
+                const regex = /^సుదినం న్యూస్ ,.*? : /;
+                contentInput.textContent = currentContent.replace(regex, '');
+            }
+        };
+
+        const formatDoc = (command, value = null) => {
+            if (activeEditor) {
+                document.execCommand(command, false, value);
+            }
+        };
+
+        // Handle logo upload and persist
+        const handleLogoUpload = (file) => {
+            if (!file.type.startsWith('image/')) {
+                errorMessage.textContent = 'Please upload a valid image file for the logo.';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const logoUrl = e.target.result;
+                previewLogo.src = logoUrl;
+                previewLogo.classList.remove('hidden');
+                localStorage.setItem('sudinamLogo', logoUrl);
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        logoUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                handleLogoUpload(file);
+            }
+        });
+
+        // Load logo from localStorage on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedLogo = localStorage.getItem('sudinamLogo');
+            if (storedLogo) {
+                previewLogo.src = storedLogo;
+                previewLogo.classList.remove('hidden');
+            }
+        });
+
+        // Handle image upload with dynamic layout rules
+        imageUpload.addEventListener('change', (event) => {
+            const files = event.target.files;
+            previewImages.innerHTML = '';
+            errorMessage.textContent = '';
+            
+            if (files.length > 4) {
+                errorMessage.textContent = 'Please select a maximum of 4 images.';
+                return;
+            }
+            
+            previewImages.className = 'flex justify-center gap-4'; // Reset classes
+            
+            switch(files.length) {
+                case 1:
+                    previewImages.classList.add('image-container-1');
+                    break;
+                case 2:
+                    previewImages.classList.add('image-container-2');
+                    break;
+                case 3:
+                    previewImages.classList.add('image-container-3');
+                    break;
+                case 4:
+                    previewImages.classList.add('image-container-4');
+                    break;
+                default:
+                    break;
+            }
+
+            Array.from(files).forEach((file) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = file.name;
+                        img.classList.add('rounded-lg', 'shadow-md', 'object-contain', 'w-full', 'h-auto');
+                        img.style.maxHeight = '400px';
+
+                        // Apply dynamic styling for single images
+                        if (files.length === 1) {
+                            img.style.width = '70%'; // Make single image a bit smaller
+                        } else {
+                            img.style.width = 'auto';
+                        }
+                        
+                        previewImages.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Handle paragraph column change
+        paragraphCount.addEventListener('change', () => {
+            const count = paragraphCount.value;
+            previewContentContainer.style.columnCount = count;
+            previewContentContainer.style.columnGap = '2rem';
+        });
+
+        // Handle dateline checkbox change
+        addDateline.addEventListener('change', updateDateline);
+
+        // Event listeners for formatting buttons and selects
+        document.getElementById('bold-btn').addEventListener('click', () => formatDoc('bold'));
+        document.getElementById('italic-btn').addEventListener('click', () => formatDoc('italic'));
+        document.getElementById('underline-btn').addEventListener('click', () => formatDoc('underline'));
+        document.getElementById('font-color').addEventListener('input', (event) => formatDoc('foreColor', event.target.value));
+        document.getElementById('font-style-select').addEventListener('change', (event) => formatDoc('fontName', event.target.value));
+        document.getElementById('font-size-select').addEventListener('change', (event) => formatDoc('fontSize', event.target.value));
+        document.getElementById('justify-left-btn').addEventListener('click', () => formatDoc('justifyLeft'));
+        document.getElementById('justify-center-btn').addEventListener('click', () => formatDoc('justifyCenter'));
+        document.getElementById('justify-right-btn').addEventListener('click', () => formatDoc('justifyRight'));
+        document.getElementById('justify-full-btn').addEventListener('click', () => formatDoc('justifyFull'));
+
+        // Handle export button click
+        exportBtn.addEventListener('click', () => {
+            exportBtn.disabled = true;
+            exportText.classList.add('hidden');
+            exportLoader.classList.remove('hidden');
+
+            const scale = 2; // Increased scale for higher quality image
+
+            // Temporarily hide the date for a clean export and apply custom styles
+            const originalDateStyle = previewDate.style.cssText;
+            previewDate.style.cssText = 'position: absolute; bottom: 1rem; right: 1rem; font-size: 0.8rem;';
+            
+            // Adjust content-container styles for export
+            const originalColumns = previewContentContainer.style.columnCount;
+            const originalGap = previewContentContainer.style.columnGap;
+            previewContentContainer.style.columnCount = paragraphCount.value;
+            previewContentContainer.style.columnGap = '2rem';
+
+            html2canvas(previewArea, { 
+                scale: scale,
+                useCORS: true,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'news-clip.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Restore original styles
+                previewDate.style.cssText = originalDateStyle;
+                previewContentContainer.style.columnCount = originalColumns;
+                previewContentContainer.style.columnGap = originalGap;
+
+                exportBtn.disabled = false;
+                exportText.classList.remove('hidden');
+                exportLoader.classList.add('hidden');
+
+            }).catch(err => {
+                console.error("Failed to generate image:", err);
+                exportBtn.disabled = false;
+                exportText.classList.remove('hidden');
+                exportLoader.classList.add('hidden');
+                errorMessage.textContent = 'Failed to export image. Please try again.';
+            });
+        });
+        
+        // Initial setup
+        updateDate();
+        setInterval(updateDate, 60000); // Update date every minute
+        titleInput.innerHTML = 'న్యూస్ టైటిల్';
+        subheadingInput.innerHTML = 'సబ్ హెడ్డింగ్';
+        contentInput.innerHTML = 'మీ వార్తల కంటెంట్ ఇక్కడ కనిపిస్తుంది.';
+
+        // Setup contenteditable events for live preview and active editor tracking
+        editors.forEach(el => {
+            el.addEventListener('focus', () => {
+                editors.forEach(e => e.classList.remove('active-editor'));
+                el.classList.add('active-editor');
+                activeEditor = el;
+            });
+            
+            el.addEventListener('paste', (event) => {
+                event.preventDefault();
+                const text = event.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+            
+            el.addEventListener('input', () => {
+                if (el.id === 'title-input') {
+                    previewTitle.innerHTML = el.innerHTML;
+                } else if (el.id === 'subheading-input') {
+                    previewSubheading.innerHTML = el.innerHTML;
+                } else if (el.id === 'content-input') {
+                    previewContent.innerHTML = el.innerHTML;
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
